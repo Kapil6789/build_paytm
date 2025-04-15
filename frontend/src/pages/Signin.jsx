@@ -1,30 +1,22 @@
-import { Heading } from "../components/Heading";
-import { Button } from "../components/Button";
-import { BottomWarning } from "../components/BottomWarning";
-import { SubHeading } from "../components/subHeading";
-import { InputBox } from "../components/InputBox";
+import { BottomWarning } from "../components/BottomWarning"
+import { Button } from "../components/Button"
+import { Heading } from "../components/Heading"
+import { InputBox } from "../components/InputBox"
+import { SubHeading } from "../components/SubHeading"
 
-export const Signin=()=>{
-    return(
-        <div className="h-screen bg-slate-200 flex justify-center">
-            <div className="flex flex-col justify-center">
-                <div className="bg-white rounded-md justify-center w-96 h-max border-2 border-black">
-                   <Heading label={"Sign In"}></Heading>
-                   <SubHeading label={"Enter your information to create account"}></SubHeading>
-                   <InputBox placeholder={"john654@gmail.com"} label={"Email"}></InputBox>
-                   <InputBox placeholder={"123456"} label={"Password"}></InputBox>
-                    <div className="pt-4">
-                        <Button label="SignIn"></Button>
-                    </div>
-                    <div>
-                          <BottomWarning label={"Already have an account?"} text={"SignUp"} to={"/Signup"}></BottomWarning>
-                    </div>
-
-                </div>
-            </div>
-        
-        
+export const Signin = () => {
+    return <div className="bg-slate-300 h-screen flex justify-center">
+    <div className="flex flex-col justify-center">
+      <div className="rounded-lg bg-white w-80 text-center p-2 h-max px-4">
+        <Heading label={"Sign in"} />
+        <SubHeading label={"Enter your credentials to access your account"} />
+        <InputBox placeholder="kapil@5465" label={"username"} />
+        <InputBox placeholder="123456" label={"Password"} />
+        <div className="pt-4">
+          <Button label={"Sign in"} />
         </div>
-    )
+        <BottomWarning label={"Don't have an account?"} buttonText={"Sign up"} to={"/signup"} />
+      </div>
+    </div>
+  </div>
 }
-

@@ -1,81 +1,57 @@
-import { Heading } from "../components/Heading";
-import { Button } from "../components/Button";
-import { BottomWarning } from "../components/BottomWarning";
-import { SubHeading } from "../components/subHeading";
-import { InputBox } from "../components/InputBox";
-import { useState } from "react";
-import Cookies from "js-cookie"
-import { useNavigate } from "react-router-dom";
-import axios from "axios"
-
-
-
+import { useState } from "react"
+import { BottomWarning } from "../components/BottomWarning"
+import { Button } from "../components/Button"
+import { Heading } from "../components/Heading"
+import { InputBox } from "../components/InputBox"
+import { SubHeading } from "../components/SubHeading"
+import axios from "axios";
+import { useNavigate } from "react-router-dom"
 
 export const Signup = () => {
-    const [username, setUsername] = useState("")
-    const [firstName, setFirstName] = useState("")
-    const [lastName, setLastName] = useState("")
-    const [email, setEmail] = useState("")
-    const [password, setPassword] = useState("")
-    const navigate = useNavigate()
+    const [firstName, setFirstName] = useState("");
+    const [lastName, setLastName] = useState("");
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const navigate = useNavigate();
 
-    return (
-        <div className="h-screen bg-slate-200 flex justify-center">
-            <div className="flex flex-col justify-center">
-                <div className="bg-white rounded-md justify-center w-96 h-max border-2 border-black">
-                    <Heading label={"Sign up"}></Heading>
-                    <SubHeading label={"Enter your information to create account"}></SubHeading>
-
-                    <InputBox placeholder={"john"} label={"First Name"} onChange={e => 
-                        setFirstName(e.target.value)
-                    }></InputBox>
-                    <InputBox placeholder={"watson"} label={"Last Name"} onChange={e => 
-                        setLastName(e.target.value)
-                    }></InputBox>
-                    <InputBox placeholder={"john654@gmail.com"} label={"Email"} onChange={e => 
-                        setEmail(e.target.value)
-                    }></InputBox>
-                    <InputBox placeholder={"123456"} label={"Password"} onChange={e => 
-                        setPassword(e.target.value)
-                    }></InputBox>
-                    <InputBox placeholder={"john@123"} label={"Username"} onChange={e => 
-                        setUsername(e.target.value)
-                    }></InputBox>
-
-
-                    <div className="pt-4">
-                        <Button onClick={ async() => {
-                            try {
-                                const response =  await axios.post("http://localhost:8000/api/v1/user/signup", {
-                                    firstName,
-                                    lastName,
-                                    email,
-                                    username,
-                                    password
-                                },{
-                                    headers:{
-                                        'Content-Type':'application/json'
-                                    }
-                                })
-                                Cookies.set("token", response.data.token, { expires: 1 / 24 });
-                                navigate("/dashboard")
-                            }
-                            catch (err) {
-                                console.log("error is " +JSON.stringify(err.response.data))
-                            }
-
-
-                        }} label={"SignUp"} ></Button>
-                    </div>
-                    <div>
-                        <BottomWarning label="Already have an account?" text="SignIn" to="/Signin"></BottomWarning>
-                    </div>
-
-                </div>
-            </div>
-
-
+    return <div className="bg-slate-300 h-screen flex justify-center">
+    <div className="flex flex-col justify-center">
+      <div className="rounded-lg bg-white w-80 text-center p-2 h-max px-4">
+        <Heading label={"Sign up"} />
+        <SubHeading label={"Enter your infromation to create an account"} />
+        <InputBox onChange={e => {
+          setFirstName(e.target.value);
+        }} placeholder="John" label={"First Name"} />
+        <InputBox onChange={(e) => {
+          setLastName(e.target.value);
+        }} placeholder="Doe" label={"Last Name"} />
+        <InputBox onChange={e => {
+          setUsername(e.target.value);
+        }} placeholder="kapil@545" label={"username"} />
+        <InputBox onChange={(e) => {
+          setPassword(e.target.value)
+        }} placeholder="123456" label={"Password"} />
+        <div className="pt-4">
+          <Button onClick={async () => {
+            const response = await axios.post("http://localhost:8000/api/v1/user/signup", {
+              username,
+              firstName,
+              lastName,
+              password
+            });
+            if (response.data.token) {
+              const token = localStorage.getItem("token");
+              if (!token) {
+                navigate("/dashboard"); // Redirect to signin if no token
+              }
+            } else {
+              alert("Failed to get token, please try again.");
+            }
+         
+          }} label={"Sign up"} />
         </div>
-    )
+        <BottomWarning label={"Already have an account?"} text={"Sign in"} to={"/signin"} />
+      </div>
+    </div>
+  </div>
 }
-

@@ -26,7 +26,7 @@ function User({ user }) {
         <div className="flex  justify-between">
             <div className="flex ml-5">
                 <div className="rounded-full h-7 w-7 mt-3 bg-slate-400 justify-center border-2  border-slate-600">
-                <div className="flex flex-col ml-2 justify-center h-full ">{user.firstName[0]}</div>
+                <div className="flex flex-col ml-2 justify-center h-full ">{setUser(user.firstName[0])}</div>
                 </div>
               <div className="flex flex-col justify-center font-semibold ml-5">{user.firstName} {user.lastName}</div>
             </div>

@@ -1,42 +1,61 @@
+import { useSearchParams } from 'react-router-dom';
+import axios from "axios";
+import { useState } from 'react';
 
 export const SendMoney = () => {
-    return (
-        <div className="h-screen bg-slate-200 flex justify-center">
-            <div className="flex flex-col justify-center">
-                <div className="p-5 bg-white rounded-md justify-center w-96 h-max border-2 border-black">
-                    <div className="text-center text-2xl font-bold mt-3">
-                        Send Money
-                    </div>
+    const [searchParams] = useSearchParams();
+    const id = searchParams.get("id");
+    const name = searchParams.get("username");
+    const [amount, setAmount] = useState(0);
 
-                    <div className="flex flex-row justify-center mt-5">
-                            <div className="rounded-full w-8 h-8 bg-green-200 border-2 border-green-950 mr-3">
-                                
-                                <div className="text-xl px-2">
-                                    A
-                                </div>
-                            </div>
-                            <div className="text-xl font-semibold">
-                                Sender's Name
-                            </div>
-                    </div>
-                    <div className="text-xl mt-4">
-                        Amount (in Rs)
-                    </div>
-                    <div className="mt-3">
-                        <input placeholder="Enter friends name" className="p-2 rounded-md w-full">
-                        </input>
-                    </div>
-                    <div className="mt-3">
-                        <button type="button" className="text-gray-900 bg-gradient-to-r from-lime-200 via-lime-400 to-lime-500 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-lime-300 dark:focus:ring-lime-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 w-full">Send Money</button>
-
-                    </div>
-
-
+    return <div class="flex justify-center h-screen bg-gray-100">
+        <div className="h-full flex flex-col justify-center">
+            <div
+                class="border h-min text-card-foreground max-w-md p-4 space-y-8 w-96 bg-white shadow-lg rounded-lg"
+            >
+                <div class="flex flex-col space-y-1.5 p-6">
+                <h2 class="text-3xl font-bold text-center">Send Money</h2>
                 </div>
-            </div>
-
-
+                <div class="p-6">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center">
+                    <span class="text-2xl text-white">{name[0].toUpperCase()}</span>
+                    </div>
+                    <h3 class="text-2xl font-semibold">{name}</h3>
+                </div>
+                <div class="space-y-4">
+                    <div class="space-y-2">
+                    <label
+                        class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        for="amount"
+                    >
+                        Amount (in Rs)
+                    </label>
+                    <input
+                        onChange={(e) => {
+                            setAmount(e.target.value);
+                        }}
+                        type="number"
+                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        id="amount"
+                        placeholder="Enter amount"
+                    />
+                    </div>
+                    <button onClick={() => {
+                        axios.post("http://localhost:8000/api/v1/account/transfer", {
+                            to: id,
+                            amount
+                        }, {
+                            headers: {
+                                Authorization: "Bearer " + localStorage.getItem("token")
+                            }
+                        })
+                    }} class="justify-center rounded-md text-sm font-medium ring-offset-background transition-colors h-10 px-4 py-2 w-full bg-green-500 text-white">
+                        Initiate Transfer
+                    </button>
+                </div>
+                </div>
         </div>
-    )
+      </div>
+    </div>
 }
-

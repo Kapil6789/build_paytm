@@ -9,13 +9,12 @@ const parse = z.object({
     password: z.string().optional(),
     lastName: z.string().optional(),
     firstName: z.string().optional(),
-    email: z.string().email().optional()
 })
 
 
 //signup
 export const signUpUser = async (req, res) => {
-    const { username, password, lastName, firstName, email } = req.body
+    const { username, password, lastName, firstName } = req.body
     const success = parse.safeParse(req.body)
     console.log(success)
     if (!success.success) {
@@ -32,7 +31,6 @@ export const signUpUser = async (req, res) => {
                 password: password,
                 lastName: lastName,
                 firstName: firstName,
-                email: email
             }
         })
 
@@ -69,7 +67,7 @@ export const signUpUser = async (req, res) => {
 
 
 export const signInUser = async (req, res) => {
-    const { password, email } = req.body
+    const { password } = req.body
     const success = parse.safeParse(req.body)
     if (!success.success) {
         return res.status(400).json({
@@ -82,7 +80,6 @@ export const signInUser = async (req, res) => {
         const users = await prisma.user.findUnique({
             where: {
                 password: password,
-                email: email
             }
 
         })
@@ -107,7 +104,7 @@ export const signInUser = async (req, res) => {
 
 export const updateUser = async (req, res) => {
 
-    const { id, username, password, email } = req.body
+    const { id, username, password } = req.body
     const success = parse.safeParse(req.body)
 
     if (!success.success) {
@@ -136,7 +133,6 @@ export const updateUser = async (req, res) => {
                 data: {
                     username: username,
                     password: password,
-                    email: email
                 }
             })
             res.status(411).json({
@@ -176,7 +172,6 @@ export const findUser = async (req, res) => {
                     username: true,
                     lastName:true,
                     firstName: true,
-                    email:true
                 }
             })
             res.status(411).json({

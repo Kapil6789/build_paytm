@@ -1,25 +1,13 @@
-import { Appbar } from "../components/Appbar" 
-import {Users} from "../components/Users"
-import {Balance} from "../components/Balance"
+import { Appbar } from "../components/Appbar"
+import { Balance } from "../components/Balance"
+import { Users } from "../components/Users"
 
-
-
-export const Dashboard=()=>{
-  return(
-    <div className="m-3">
-        <div>
-        <Appbar/>
+export const Dashboard = () => {
+    return <div>
+        <Appbar />
+        <div className="m-8">
+            <Balance value={"10,000"} />
+            <Users />
         </div>
-        
-        <div>
-        <Balance label={"2000"}/>
-        </div>
-
-        <div>
-            <Users/>
-        </div>
-   
-       
     </div>
-  )
 }
