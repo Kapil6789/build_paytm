@@ -19,6 +19,7 @@ model User{
   password   String 
   firstName   String
   lastName    String
+  balance     Int  @default(0)
   account      Account?
   createdAt    DateTime  @default(now())
 }
