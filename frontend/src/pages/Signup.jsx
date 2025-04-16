@@ -6,13 +6,13 @@ import { InputBox } from "../components/InputBox"
 import { SubHeading } from "../components/SubHeading"
 import axios from "axios";
 import { useNavigate } from "react-router-dom"
-import { useEffect } from "react"
 
 export const Signup = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [balance, setBalance] = useState("");
   const navigate = useNavigate();
 
   return <div className="bg-slate-300 h-screen flex justify-center">
@@ -32,23 +32,33 @@ export const Signup = () => {
         <InputBox onChange={(e) => {
           setPassword(e.target.value)
         }} placeholder="123456" label={"Password"} />
+        <InputBox onChange={(e) => {
+          setBalance(e.target.value)
+        }} placeholder="0000" label={"Balance"} />
         <div className="pt-4">
           <Button onClick={async () => {
-            const response = await axios.post("http://localhost:8000/api/v1/user/signup", {
-              username,
-              firstName,
-              lastName,
-              password
+            try{
+              const response = await axios.post("http://localhost:8000/api/v1/user/signup", {
+                username,
+                firstName,
+                lastName,
+                password,
+                balance
+              }
+              )
+              const token = response.data.token;
+  
+              if (token) {
+                localStorage.setItem('token', token);
+                navigate("/dashboard")
+              } else {
+                console.error('No token received');
+              }
             }
-            )
-            const token = response.data.token;
-            if (token) {
-              localStorage.setItem('token', token);
-              console.log('Token saved in localStorage:', token);
-              navigate("/dashboard")
-            } else {
-              console.error('No token received');
+            catch(err){
+              console.log(err)
             }
+            
           }} label={"Sign up"} />
         </div>
         <BottomWarning label={"Already have an account?"} text={"Sign in"} to={"/signin"} />

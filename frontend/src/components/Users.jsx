@@ -1,40 +1,49 @@
-import { useState } from "react"
-export const Users = () => {
-    const [user, setUser] = useState([{
-        firstName: "Kapil",
-        lastName: "pandey",
-        id: 1
-    }])
+import { useState } from "react";
+import { InputBox } from "./InputBox";
+export const Users = ({ users }) => {
+    const [search, setSearch] = useState("");
+
+    const filteredUsers = (users ?? []).filter(user =>
+        `${user.firstName ?? ""} ${user.lastName ?? ""}`.toLowerCase().includes(search.toLowerCase())
+    );
+    
+
     return (
         <>
-            <div className="font-bold mt-5 ml-5">
-                Users
+            <div className="my-2">
+                <InputBox
+                    onChange={(e) => {
+                        setSearch(e.target.value);
+                    
+                    }}
+                    type="text"
+                    placeholder={"Search users..."}
+                    className="w-full px-2 py-1 border rounded border-slate-200"
+                    label={"Search User"}
+                />
             </div>
-            <div className="rounded-md mt-5 mx-5">
-                <input placeholder="Search Users ..." className="w-full border-1 border-black p-2"></input>
+            <div className="space-y-4">
+                {filteredUsers.map(user => (
+                    <User key={user.id} user={user} />
+                ))}
             </div>
-            <div className="mt-5">
-                {user.map(user => <User user={user} />)}
-            </div>
-
         </>
-    )
-}
+    );
+};
 
 function User({ user }) {
-    return (
-        <div className="flex  justify-between">
-            <div className="flex ml-5">
-                <div className="rounded-full h-7 w-7 mt-3 bg-slate-400 justify-center border-2  border-slate-600">
-                <div className="flex flex-col ml-2 justify-center h-full ">{setUser(user.firstName[0])}</div>
-                </div>
-              <div className="flex flex-col justify-center font-semibold ml-5">{user.firstName} {user.lastName}</div>
-            </div>
-            <div className="flex flex-col justify-center">
-            <button type="button" className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-full text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700 mr-5 ">Send Money</button>
 
+    return (
+        <div className="flex justify-between items-center p-2 border rounded shadow-sm">
+            <div className="flex items-center">
+                <div className="rounded-full h-12 w-12 bg-slate-200 flex items-center justify-center mr-2 text-xl">
+                {(user?.firstName?.[0] ?? "?").toUpperCase()}
+                </div>
+                <div>
+                    <div>{user.firstName} {user.lastName}</div>
+                </div>
             </div>
-           
+        
         </div>
-    )
+    );
 }

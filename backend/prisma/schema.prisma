@@ -16,7 +16,7 @@ datasource db {
 model User{
   id         Int    @id @default(autoincrement())
   username   String
-  password   String 
+  password   String @unique
   firstName   String
   lastName    String
   balance     Int  @default(0)
@@ -27,7 +27,7 @@ model User{
 
 model Account{
   userId         Int    @id @unique
-  balance        Int    
+  balance        Int    @default(0)
   user          User   @relation(fields:[userId],references: [id])
   createdAt    DateTime  @default(now())
 

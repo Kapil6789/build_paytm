@@ -9,12 +9,13 @@ const parse = z.object({
     password: z.string().optional(),
     lastName: z.string().optional(),
     firstName: z.string().optional(),
+    balance: z.string().optional(),
 })
 
 
 //signup
 export const signUpUser = async (req, res) => {
-    const { username, password, lastName, firstName } = req.body
+    const { username, password, lastName, firstName, balance } = req.body
     const success = parse.safeParse(req.body)
     console.log(success)
     if (!success.success) {
@@ -31,9 +32,10 @@ export const signUpUser = async (req, res) => {
                 password: password,
                 lastName: lastName,
                 firstName: firstName,
+                balance: parseInt(balance)
             }
         })
-
+       
 
         const token = jwt.sign({
             userId: newUser.id
@@ -45,7 +47,7 @@ export const signUpUser = async (req, res) => {
        
         data:{
             userId:newUser.id,
-            balance:1+Math.random()*10000
+            balance:parseInt(balance)
         }
        })
 
@@ -67,35 +69,48 @@ export const signUpUser = async (req, res) => {
 
 
 export const signInUser = async (req, res) => {
-    const { password } = req.body
-    const success = parse.safeParse(req.body)
+    const { username, password } = req.body;
+    const success = parse.safeParse(req.body);
     if (!success.success) {
         return res.status(400).json({
             message: "Input validation failed",
             errors: success.error.errors,
-
         });
     }
     try {
-        const users = await prisma.user.findUnique({
-            where: {
-                password: password,
+        const user = await prisma.user.findFirst({
+            where: { username: username },
+            select: {
+                username: true,
+                password: true,
+                id: true
             }
-
-        })
+        });
         
-        if (!users) {
+        if (!user) {
             return res.status(404).json({
-                message: "no user found"
-            })
+                message: "No user found"
+            });
         }
-        else {
-             res.status(411).json({message:"signin successfully"})
+
+        if (user.password !== password) {
+          return res.status(401).json({
+            message: "Invalid credentials"
+          });
         }
+
+        const token = jwt.sign({ id: user.id }, JWT_SECRET);
+        return res.status(200).json({
+            token: token,
+            message: "Sign in successfully"
+        });
     }
     catch (err) {
-        res.send("errors are" + err)
-        console.log(`error found ${err}`)
+        console.error("Error in signInUser:", err);
+        return res.status(500).json({
+            message: "Server error",
+            error: err.message
+        });
     }
 }
 
@@ -171,6 +186,7 @@ export const findUser = async (req, res) => {
                 select: {
                     username: true,
                     lastName:true,
+                    id:true,
                     firstName: true,
                 }
             })
