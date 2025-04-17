@@ -175,26 +175,23 @@ export const findUser = async (req, res) => {
     }
 
     try {
-        if (!username) {
-            res.json({ message: "no such user" })
+        const user = await prisma.user.findFirst({
+            where: { username: username },
+            select: {
+                username: true,
+                lastName: true,
+                id: true,
+                firstName: true,
+            }
+        });
+        if (!user) {
+            return res.status(404).json({ 
+                message: "No user found" 
+            });
         }
-        else {
-           const user= await prisma.user.findFirst({
-                where: {
-                    username: username
-                },
-                select: {
-                    username: true,
-                    lastName:true,
-                    id:true,
-                    firstName: true,
-                }
-            })
-            res.status(411).json({
-                user:user
-            })
+        return res.status(200).json({ user: user });
         }
-    }
+    
     catch (err) {
         res.json("error occured " + err)
         console.log(err)

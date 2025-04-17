@@ -23,28 +23,27 @@ export const Dashboard = () => {
 
             <Button
                 onClick={async () => {
-                    try{
-                           await  axios.get("http://localhost:8000/api/v1/user/find")
-                                .then(response => {
-                                    console.log("Fetched user:", response.data);
-                                    setUsers([response.data.user]); 
-                                })
-                                .catch(error => {
-                                    console.error("Error fetching user:", error);
-                                });
-                                if(user){
-                    navigate(`/sendmoney?id=${users.id}&name=${users.username}`);
-
-                                }
+                    try {
+                        const token = localStorage.getItem("token");
+                        const response = await axios.get("http://localhost:8000/api/v1/user/", {
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
+                        });
+                        console.log("Fetched user:", response.data);
+                        console.log(token)
+                        const user = response.data.user;
+                        if (user) {
+                            navigate(`/sendmoney?id=${user.id}&name=${user.username}`);
+                        } else {
+                            console.error("No user found");
+                        }
+                    } catch (err) {
+                        console.log(err);
                     }
-                    catch(err){
-                        console.log(err)
-                    }
-                        
-                    
                 }}
-                label="Send Money"
-            />
+                label="Send Money" />
+
         </div>
     );
 }

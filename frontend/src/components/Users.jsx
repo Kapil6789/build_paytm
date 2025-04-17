@@ -23,6 +23,7 @@ export const Users = ({ users }) => {
                 />
             </div>
             <div className="space-y-4">
+                {console.log("Filtered users:", filteredUsers)}
                 {filteredUsers.map(user => (
                     <User key={user.id} user={user} />
                 ))}

@@ -1,11 +1,13 @@
 import { useSearchParams } from 'react-router-dom';
 import axios from "axios";
 import { useState } from 'react';
+import { InputBox } from '../components/InputBox';
+import { Button } from '../components/Button';
 
 export const SendMoney = () => {
     const [searchParams] = useSearchParams();
     const id = searchParams.get("id");
-    const name = searchParams.get("username");
+    const name = searchParams.get("name");
     const [amount, setAmount] = useState(0);
 
     return <div class="flex justify-center h-screen bg-gray-100">
@@ -31,28 +33,44 @@ export const SendMoney = () => {
                     >
                         Amount (in Rs)
                     </label>
-                    <input
+                    <InputBox
                         onChange={(e) => {
                             setAmount(e.target.value);
                         }}
                         type="number"
-                        class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                         id="amount"
-                        placeholder="Enter amount"
+                        label={"Amount"}
+                        placeholder={"Enter amount"}
                     />
                     </div>
-                    <button onClick={() => {
-                        axios.post("http://localhost:8000/api/v1/account/transfer", {
-                            to: id,
-                            amount
-                        }, {
-                            headers: {
-                                Authorization: "Bearer " + localStorage.getItem("token")
-                            }
-                        })
-                    }} class="justify-center rounded-md text-sm font-medium ring-offset-background transition-colors h-10 px-4 py-2 w-full bg-green-500 text-white">
-                        Initiate Transfer
-                    </button>
+                    <Button onClick={() => {
+                        try{
+                            axios.post("http://localhost:8000/api/v1/account/transferFunds", {
+                                fromAccountId: 103,
+                                toAccountId:id,
+                                amount
+                            }, {
+                                headers: {
+                                    Authorization: "Bearer " + localStorage.getItem("token")
+                                }
+                            })
+                            .then((response) => {
+                                console.log(response.data);
+                                alert("Transfer Successful")
+                            })
+                            .catch((error) => {
+                                console.error(error);
+                                alert("Transfer Failed")
+                            });
+                        }
+                        catch(err){
+                            alert("unsble to do transaction")
+                        }
+                     
+                    }} className="justify-center rounded-md text-sm font-medium ring-offset-background transition-colors h-10 px-4 py-2 w-full bg-green-500 text-white" label={"Initiate Transfer"}>
+                        Initiate Transfer</Button>
+                        
                 </div>
                 </div>
         </div>

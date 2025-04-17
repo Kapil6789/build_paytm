@@ -9,7 +9,7 @@ const router = Router()
 router.post("/signup",signUpUser)
 router.post("/signin",signInUser)
 router.put("/update",updateUser)
-router.get("/find",findUser)
+router.get("/",findUser)
 
 
 export default router
