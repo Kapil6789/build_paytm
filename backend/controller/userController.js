@@ -197,3 +197,48 @@ export const findUser = async (req, res) => {
         console.log(err)
     }
 }
+
+export const getCurrentUser = async (req, res) => {
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: req.userId },
+            select: {
+                id: true,
+                username: true,
+                firstName: true,
+                lastName: true,
+                account: { select: { balance: true } },
+            },
+        });
+        if (!user) return res.status(404).json({ message: "Account not found." });
+        return res.json({ user: { ...user, balance: user.account?.balance ?? 0 } });
+    } catch (err) {
+        console.error("Error loading account:", err);
+        return res.status(500).json({ message: "Could not load your account." });
+    }
+};
+
+export const searchUsers = async (req, res) => {
+    const query = typeof req.query.query === "string" ? req.query.query.trim() : "";
+    try {
+        const users = await prisma.user.findMany({
+            where: {
+                id: { not: req.userId },
+                ...(query ? {
+                    OR: [
+                        { firstName: { contains: query, mode: "insensitive" } },
+                        { lastName: { contains: query, mode: "insensitive" } },
+                        { username: { contains: query, mode: "insensitive" } },
+                    ],
+                } : {}),
+            },
+            select: { id: true, username: true, firstName: true, lastName: true },
+            orderBy: { firstName: "asc" },
+            take: 100,
+        });
+        return res.json({ users });
+    } catch (err) {
+        console.error("Error searching users:", err);
+        return res.status(500).json({ message: "Could not load users." });
+    }
+};

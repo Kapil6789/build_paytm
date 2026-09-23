@@ -1,79 +1,109 @@
-import { useSearchParams } from 'react-router-dom';
+import { useEffect, useState } from "react";
 import axios from "axios";
-import { useState } from 'react';
-import { InputBox } from '../components/InputBox';
-import { Button } from '../components/Button';
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+
+const api = "http://localhost:8000/api/v1";
+const formatRupees = (amount) => new Intl.NumberFormat("en-IN", {
+  style: "currency", currency: "INR", maximumFractionDigits: 0,
+}).format(amount ?? 0);
 
 export const SendMoney = () => {
-    const [searchParams] = useSearchParams();
-    const id = searchParams.get("id");
-    const name = searchParams.get("name");
-    const [amount, setAmount] = useState(0);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const recipientId = Number(searchParams.get("id"));
+  const recipientName = searchParams.get("name") || "Paytm user";
+  const recipientUsername = searchParams.get("username") || "";
+  const [amount, setAmount] = useState("");
+  const [balance, setBalance] = useState(null);
+  const [loadingBalance, setLoadingBalance] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [sentAmount, setSentAmount] = useState(0);
+  const token = localStorage.getItem("token");
 
-    return <div class="flex justify-center h-screen bg-gray-100">
-        <div className="h-full flex flex-col justify-center">
-            <div
-                class="border h-min text-card-foreground max-w-md p-4 space-y-8 w-96 bg-white shadow-lg rounded-lg"
-            >
-                <div class="flex flex-col space-y-1.5 p-6">
-                <h2 class="text-3xl font-bold text-center">Send Money</h2>
-                </div>
-                <div class="p-6">
-                <div class="flex items-center space-x-4">
-                    <div class="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center">
-                    <span class="text-2xl text-white">{name[0].toUpperCase()}</span>
-                    </div>
-                    <h3 class="text-2xl font-semibold">{name}</h3>
-                </div>
-                <div class="space-y-4">
-                    <div class="space-y-2">
-                    <label
-                        class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        for="amount"
-                    >
-                        Amount (in Rs)
-                    </label>
-                    <InputBox
-                        onChange={(e) => {
-                            setAmount(e.target.value);
-                        }}
-                        type="number"
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        id="amount"
-                        label={"Amount"}
-                        placeholder={"Enter amount"}
-                    />
-                    </div>
-                    <Button onClick={() => {
-                        try{
-                            axios.post("http://localhost:8000/api/v1/account/transferFunds", {
-                                fromAccountId: 103,
-                                toAccountId:id,
-                                amount
-                            }, {
-                                headers: {
-                                    Authorization: "Bearer " + localStorage.getItem("token")
-                                }
-                            })
-                            .then((response) => {
-                                console.log(response.data);
-                                alert("Transfer Successful")
-                            })
-                            .catch((error) => {
-                                console.error(error);
-                                alert("Transfer Failed")
-                            });
-                        }
-                        catch(err){
-                            alert("unsble to do transaction")
-                        }
-                     
-                    }} className="justify-center rounded-md text-sm font-medium ring-offset-background transition-colors h-10 px-4 py-2 w-full bg-green-500 text-white" label={"Initiate Transfer"}>
-                        Initiate Transfer</Button>
-                        
-                </div>
-                </div>
-        </div>
-      </div>
+  useEffect(() => {
+    if (!token) {
+      navigate("/signin", { replace: true });
+      return;
+    }
+    axios.get(`${api}/user/me`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(({ data }) => setBalance(data.user.balance))
+      .catch((err) => {
+        if (err.response?.status === 401) {
+          localStorage.removeItem("token");
+          navigate("/signin", { replace: true });
+        } else setError("We couldn’t load your wallet balance.");
+      })
+      .finally(() => setLoadingBalance(false));
+  }, [navigate, token]);
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setError("");
+    const value = Number(amount);
+    if (!Number.isInteger(recipientId) || recipientId < 1) return setError("Choose a valid recipient from your people list.");
+    if (!Number.isInteger(value) || value < 1) return setError("Enter a whole amount greater than zero.");
+    if (balance !== null && value > balance) return setError("That’s more than your available balance.");
+
+    setSubmitting(true);
+    try {
+      const { data } = await axios.post(`${api}/account/transferFunds`, {
+        toAccountId: recipientId,
+        amount: value,
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      setBalance(data.balance);
+      setSentAmount(value);
+      setSuccess(true);
+      setAmount("");
+    } catch (err) {
+      if (err.response?.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/signin", { replace: true });
+      } else setError(err.response?.data?.message || "Your transfer couldn’t be completed. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="wallet-app transfer-page">
+      <header className="app-nav">
+        <Link to="/dashboard" className="app-brand"><span className="app-brand-mark">p</span> pay<span>tm</span></Link>
+        <Link to="/dashboard" className="transfer-back">← <span>Back to wallet</span></Link>
+      </header>
+      <main className="transfer-main">
+        <div className="transfer-breadcrumb"><Link to="/dashboard">Wallet</Link><span>/</span><span>Send money</span></div>
+        <section className="transfer-card">
+          <div className="transfer-card-top"><span className="transfer-icon" aria-hidden="true">↗</span><span className="transfer-step">QUICK TRANSFER</span></div>
+          <div className="transfer-heading"><h1>Send money</h1><p>Fast, simple payments to people you know.</p></div>
+
+          {success ? (
+            <div className="transfer-success" role="status">
+              <span className="success-check" aria-hidden="true">✓</span>
+              <span className="app-kicker">TRANSFER COMPLETE</span>
+              <h2>Money sent successfully</h2>
+              <p>You sent {formatRupees(sentAmount)} to {recipientName}. Your wallet balance is now {formatRupees(balance)}.</p>
+              <Link className="transfer-submit transfer-done" to="/dashboard">Back to wallet <span aria-hidden="true">→</span></Link>
+            </div>
+          ) : (
+            <>
+              <div className="transfer-recipient"><span className="recipient-avatar">{recipientName[0]?.toUpperCase() ?? "P"}</span><span className="recipient-details"><strong>{recipientName}</strong><span>{recipientUsername}</span></span><span className="verified-pill">PAYTM</span></div>
+              <form onSubmit={handleSubmit}>
+                <label className="transfer-amount-label" htmlFor="transfer-amount">Amount to send</label>
+                <div className="transfer-amount-wrap"><span>₹</span><input id="transfer-amount" type="number" min="1" step="1" inputMode="numeric" placeholder="0" value={amount} onChange={(event) => setAmount(event.target.value)} required /><span className="amount-currency">INR</span></div>
+                <div className="available-balance"><span>Available balance</span><strong>{loadingBalance ? "Loading…" : formatRupees(balance)}</strong></div>
+                {error && <p className="transfer-error" role="alert">{error}</p>}
+                <button className="transfer-submit" type="submit" disabled={submitting || loadingBalance || balance === null}>
+                  {submitting ? "Sending securely…" : "Send money"}<span aria-hidden="true">→</span>
+                </button>
+                <p className="transfer-note"><span aria-hidden="true">⌑</span> Secure transfer from your Paytm wallet</p>
+              </form>
+            </>
+          )}
+        </section>
+        <p className="transfer-support">Need help? Make sure the recipient details are correct before sending.</p>
+      </main>
     </div>
-}
+  );
+};

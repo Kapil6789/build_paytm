@@ -3,83 +3,47 @@ import prisma from "../prisma/db.config.js"
 
 
 export const tranferFunds = async (req, res) => {
-   const { fromAccountId, toAccountId, amount } = req.body
+   const toAccountId = Number(req.body.toAccountId);
+   const amount = Number(req.body.amount);
+   const fromAccountId = req.userId;
 
-   if (!fromAccountId || !toAccountId || !amount) {
-      res.send("invalid input")
+   if (!Number.isInteger(toAccountId) || toAccountId < 1 || !Number.isInteger(amount) || amount < 1) {
+      return res.status(400).json({ message: "Enter a valid recipient and a whole amount greater than zero." });
+   }
+   if (toAccountId === fromAccountId) {
+      return res.status(400).json({ message: "You can’t send money to your own account." });
    }
 
    try {
+      const balances = await prisma.$transaction(async (tx) => {
+         const sender = await tx.account.findUnique({ where: { userId: fromAccountId } });
+         if (!sender) throw Object.assign(new Error("Your wallet account was not found."), { status: 404 });
+         if (sender.balance < amount) throw Object.assign(new Error("Your balance is too low for this transfer."), { status: 400 });
 
-      const result = await prisma.$transaction(async (primsa) => {
-         const balanceFrom = await prisma.account.findFirst({
-            where: {
-               userId: parseInt(fromAccountId)
-            }
+         const recipient = await tx.account.findUnique({ where: { userId: toAccountId } });
+         if (!recipient) throw Object.assign(new Error("The recipient’s wallet was not found."), { status: 404 });
 
-         })
+         const [updatedSender, updatedRecipient] = await Promise.all([
+            tx.account.update({ where: { userId: fromAccountId }, data: { balance: { decrement: amount } } }),
+            tx.account.update({ where: { userId: toAccountId }, data: { balance: { increment: amount } } }),
+         ]);
+         return { sender: updatedSender.balance, recipient: updatedRecipient.balance };
+      });
 
-         if (!balanceFrom) {
-            throw new Error("sender account not found")
-         }
-
-         if (!balanceFrom || balanceFrom.balance < parseInt(amount)) {
-            res.json({
-               message: "insufficient balance"
-            })
-         }
-
-         const balanceTo = await prisma.account.findFirst({
-            where: {
-               userId: parseInt(toAccountId)
-            }
-         })
-
-         if (!balanceTo) {
-            throw new Error("reciever account not found")
-         }
-
-         await prisma.account.update({
-            where: {
-               userId: parseInt(fromAccountId)
-            },
-            data: {
-               balance: balanceFrom.balance - parseInt(amount)
-            }
-         })
-
-         await prisma.account.update({
-            where: {
-               userId: parseInt(toAccountId)
-            },
-            data: {
-               balance: balanceTo.balance + parseInt(amount)
-            }
-         })
-
-        
-      })
-      
-      res.status(200).send({
-         message: "transaction done successfully",
-         result:result
-      })
-      
+      return res.json({ message: "Transfer complete.", balance: balances.sender });
+   } catch (err) {
+      console.error("Transfer failed:", err);
+      return res.status(err.status ?? 500).json({ message: err.status ? err.message : "The transfer could not be completed." });
    }
-   catch (err) {
-         console.log("error is " + err)
-   }
-  
-}
+};
 
 export const findBalance = async (req, res) => {
-   const { id } = req.body
-   const amount = await prisma.account.findUnique({
-      where: {
-         userId: parseInt(id)
-      }
-   })
-   res.status(200).json({
-      message: amount.balance
-   })
+   try {
+      const account = await prisma.account.findUnique({ where: { userId: req.userId } });
+      if (!account) return res.status(404).json({ message: "Wallet account not found." });
+      return res.json({ balance: account.balance });
+   } catch (err) {
+      console.error("Could not load balance:", err);
+      return res.status(500).json({ message: "Could not load your balance." });
+   }
 }
