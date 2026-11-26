@@ -1,5 +1,6 @@
 
 import prisma from "../prisma/db.config.js"
+import bcrypt from "bcrypt"
 import z from "zod"
 import jwt from "jsonwebtoken"
 import { JWT_SECRET } from "../jwt_secret/config.js"
@@ -25,40 +26,50 @@ export const signUpUser = async (req, res) => {
     }
 
     try {
-        const newUser = await prisma.user.create({
-            data: {
-                username: username,
-                password: password,
-                lastName: lastName,
-                firstName: firstName,
-                balance: parseInt(balance)
-            }
-        })
-       
-
-        const token = jwt.sign({
-            userId: newUser.id
-        }, JWT_SECRET)
-        // res.cookie("token", token)
-    
-
-       await prisma.account.create({
-       
-        data:{
-            userId:newUser.id,
-            balance:parseInt(balance)
+        if (typeof password !== "string" || password.length === 0) {
+            return res.status(400).json({ message: "Password is required." });
         }
-       })
 
+        const passwordHash = await bcrypt.hash(password, 12);
+        const newUser = await prisma.$transaction(async (tx) => {
+            const user = await tx.user.create({
+                data: {
+                    username,
+                    password: passwordHash,
+                    lastName,
+                    firstName,
+                    balance: parseInt(balance, 10),
+                },
+                select: {
+                    id: true,
+                    username: true,
+                    firstName: true,
+                    lastName: true,
+                    balance: true,
+                },
+            });
+
+            await tx.account.create({
+                data: {
+                    userId: user.id,
+                    balance: parseInt(balance, 10),
+                },
+            });
+
+            return user;
+        });
+
+        const token = jwt.sign({ userId: newUser.id }, JWT_SECRET);
 
         return res.status(200).json({
-            token: token, message: "user created successfully", user: newUser
-        })
-
+            token,
+            message: "user created successfully",
+            user: newUser,
+        });
     }
     catch (err) {
-        console.log(err)
-        res.send("errors are" + err)
+        console.error("Error creating user:", err);
+        return res.status(500).json({ message: "Could not create account." });
     }
 
 }
@@ -86,19 +97,29 @@ export const signInUser = async (req, res) => {
             }
         });
         
-        if (!user) {
-            return res.status(404).json({
-                message: "No user found"
+        if (!user || typeof password !== "string") {
+            return res.status(401).json({ message: "Invalid credentials" });
+        }
+
+        const isBcryptHash = /^\$2[aby]\$/.test(user.password);
+        const passwordMatches = isBcryptHash
+            ? await bcrypt.compare(password, user.password)
+            : user.password === password;
+
+        if (!passwordMatches) {
+            return res.status(401).json({ message: "Invalid credentials" });
+        }
+
+        // Upgrade legacy plain-text rows on successful sign-in during rollout.
+        if (!isBcryptHash) {
+            const passwordHash = await bcrypt.hash(password, 12);
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { password: passwordHash },
             });
         }
 
-        if (user.password !== password) {
-          return res.status(401).json({
-            message: "Invalid credentials"
-          });
-        }
-
-        const token = jwt.sign({ id: user.id }, JWT_SECRET);
+        const token = jwt.sign({ userId: user.id }, JWT_SECRET);
         return res.status(200).json({
             token: token,
             message: "Sign in successfully"
@@ -129,29 +150,37 @@ export const updateUser = async (req, res) => {
         });
     }
     try {
-        const allUser = prisma.user.findMany({
-            where: {
-                id: parseInt(id)
-            }
-        })
-        if (!allUser) {
+        const userId = parseInt(id, 10);
+        if (!Number.isInteger(userId) || userId < 1) {
+            return res.status(400).json({ message: "A valid user id is required." });
+        }
+
+        const existingUser = await prisma.user.findUnique({ where: { id: userId } });
+        if (!existingUser) {
             return res.status(404).json({
                 message: "no user found"
             })
         }
         else {
-            const updateUser = await prisma.user.update({
-                where: {
-                    id: parseInt(id)
+            const data = {};
+            if (username !== undefined) data.username = username;
+            if (password !== undefined) data.password = await bcrypt.hash(password, 12);
+
+            const updatedUser = await prisma.user.update({
+                where: { id: userId },
+                data,
+                select: {
+                    id: true,
+                    username: true,
+                    firstName: true,
+                    lastName: true,
+                    balance: true,
                 },
-                data: {
-                    username: username,
-                    password: password,
-                }
-            })
-            res.status(411).json({
-                message: "update user successfully", user: updateUser
-            })
+            });
+            return res.status(200).json({
+                message: "update user successfully",
+                user: updatedUser,
+            });
 
         }
     }

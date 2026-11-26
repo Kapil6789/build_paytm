@@ -9,7 +9,8 @@
     "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "npm run setup && node dev.js",
-    "seed": "node backend/prisma/seed.js"
+    "seed": "node backend/prisma/seed.js",
+    "hash-passwords": "node backend/prisma/hash-existing-passwords.js"
   },
   "author": "",
   "license": "ISC",

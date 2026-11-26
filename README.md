@@ -76,6 +76,14 @@ npx prisma migrate dev --schema backend/prisma/schema.prisma
 npm run dev
 ```
 
+### Protect existing account passwords
+
+New and updated passwords are stored as bcrypt hashes. After deploying the updated backend, run this once from the project root to hash passwords already stored in the database:
+
+```bash
+npm run hash-passwords
+```
+
 ## 📜 License
 
 This project is open-source and available under the [MIT License](LICENSE).
