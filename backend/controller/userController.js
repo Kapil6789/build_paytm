@@ -17,7 +17,6 @@ const parse = z.object({
 export const signUpUser = async (req, res) => {
     const { username, password, lastName, firstName, balance } = req.body
     const success = parse.safeParse(req.body)
-    console.log(success)
     if (!success.success) {
         return res.status(400).json({
             message: "Input validation failed",

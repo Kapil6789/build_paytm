@@ -5,9 +5,10 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "setup": "npm install --prefix frontend && prisma generate --schema backend/prisma/schema.prisma",
     "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node dev.js",
+    "dev": "npm run setup && node dev.js",
     "seed": "node backend/prisma/seed.js"
   },
   "author": "",

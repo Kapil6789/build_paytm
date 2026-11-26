@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { API_URL } from "../api";
 import { Link, useNavigate } from "react-router-dom";
 
-const api = "http://localhost:8000/api/v1";
+const api = API_URL;
 const formatRupees = (amount) => new Intl.NumberFormat("en-IN", {
   style: "currency", currency: "INR", maximumFractionDigits: 0,
 }).format(amount ?? 0);

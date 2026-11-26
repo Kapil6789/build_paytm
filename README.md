@@ -46,12 +46,17 @@ build_paytm/
 - Node.js installed
 - A relational database (PostgreSQL/MySQL based on your Prisma config)
 
-### 1. Backend Setup
+### 1. Install dependencies
 
 ```bash
-cd backend
 npm install
+npm run setup
 ```
+
+`npm run setup` installs the frontend dependencies and generates the Prisma client.
+The `npm run dev` command runs setup before starting the backend and frontend.
+
+### 2. Backend Setup
 
 Configure Environment Variables:
 Create a `.env` file in the `backend` directory and add your database URL:
@@ -60,25 +65,13 @@ DATABASE_URL="your_database_connection_string"
 JWT_SECRET="your_jwt_secret"
 ```
 
-Run Database Migrations:
+Run Database Migrations from the project root:
 ```bash
-npx prisma migrate dev
+npx prisma migrate dev --schema backend/prisma/schema.prisma
 ```
 
-Start the Backend Server:
-```bash
-node index.js
-```
+### 3. Start backend and frontend
 
-### 2. Frontend Setup
-
-Open a new terminal window:
-```bash
-cd frontend
-npm install
-```
-
-Start the Frontend Development Server:
 ```bash
 npm run dev
 ```

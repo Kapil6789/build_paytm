@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import { API_URL } from "../api";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthLayout, AuthField, Brand } from "../components/AuthLayout";
 
@@ -18,7 +19,7 @@ export const Signup = () => {
     setError("");
     setBusy(true);
     try {
-      const response = await axios.post("http://localhost:8000/api/v1/user/signup", {
+      const response = await axios.post(`${API_URL}/user/signup`, {
         username: username.trim(), firstName: firstName.trim(), lastName: lastName.trim(), password, balance,
       });
       if (!response.data.token) throw new Error("The server did not return a sign-up token.");

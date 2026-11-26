@@ -8,7 +8,17 @@ import cookieParser from "cookie-parser"
 app.use(express.json())
 app.use(cookieParser())
 app.use(cors({
-  origin: "http://localhost:5173", // your React app origin
+  origin: (origin, callback) => {
+    const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:5173")
+      .split(",")
+      .map((value) => value.trim());
+
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error("Origin is not allowed by CORS"));
+  },
   credentials: true
 }));
 // app.use( (req,res,next)=>{ res.header('Access-Control-Allow-Origin', '*');  // Allow all origins
@@ -21,6 +31,7 @@ app.use(cors({
 // })
 app.use('/api/v1',mainRouter)
 
-app.listen(8000,()=>{
-    console.log("server is running")
+const port = process.env.PORT || 8000;
+app.listen(port, "0.0.0.0", () => {
+    console.log(`server is running on port ${port}`)
 })
