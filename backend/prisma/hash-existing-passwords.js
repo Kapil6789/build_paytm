@@ -1,5 +1,20 @@
+import dotenv from "dotenv";
+import { fileURLToPath } from "node:url";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
-import prisma from "./db.config.js";
+
+dotenv.config({ path: fileURLToPath(new URL("../.env", import.meta.url)) });
+
+const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error("Set DATABASE_URL or DIRECT_URL before hashing passwords.");
+}
+
+const directUrl = new URL(connectionString);
+directUrl.hostname = directUrl.hostname.replace("-pooler.", ".");
+const prisma = new PrismaClient({
+  datasources: { db: { url: directUrl.toString() } },
+});
 
 const bcryptHashPattern = /^\$2[aby]\$\d{2}\$/;
 
